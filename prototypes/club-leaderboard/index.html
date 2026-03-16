@@ -199,6 +199,48 @@
   .period-btn { flex: 1; text-align: center; padding: 7px 0; font-size: 13px; font-weight: 600; border-radius: 7px; cursor: pointer; color: #666; transition: all 0.2s; }
   .period-btn.active { background: #fff; color: #000; box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06); }
 
+  /* Region filter */
+  .region-filter { position: relative; margin: 0 16px 10px; }
+  .region-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; padding: 8px 12px;
+    background: #fff; border: 1px solid #e5e5ea; border-radius: 10px;
+    font-size: 13px; font-weight: 500; color: #000; cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .region-btn:active { border-color: #000; }
+  .region-btn-icon { font-size: 11px; color: #999; transition: transform 0.25s; }
+  .region-btn-icon.open { transform: rotate(180deg); }
+  .region-btn-label { display: flex; align-items: center; gap: 6px; }
+  .region-btn-pin { font-size: 13px; }
+
+  .region-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: #fff; border: 1px solid #e5e5ea; border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 130;
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
+    opacity: 0;
+  }
+  .region-dropdown.open { max-height: 240px; opacity: 1; overflow-y: auto; }
+  .region-dropdown::-webkit-scrollbar { display: none; }
+  .region-option {
+    padding: 10px 14px; font-size: 14px; color: #333; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: background 0.15s;
+  }
+  .region-option:first-child { border-radius: 12px 12px 0 0; }
+  .region-option:last-child { border-radius: 0 0 12px 12px; }
+  .region-option:hover { background: #f8f8f8; }
+  .region-option.active { color: #000; font-weight: 600; background: #F0FFF4; }
+  .region-option .region-check { width: 18px; text-align: center; font-size: 14px; }
+  .region-option:not(:last-child) { border-bottom: 0.5px solid #f0f0f0; }
+
+  .region-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 125;
+  }
+  .region-overlay.open { display: block; }
+
   .metric-chips { display: flex; gap: 8px; padding: 0 16px 14px; overflow-x: auto; }
   .metric-chips::-webkit-scrollbar { display: none; }
   .metric-chip { flex-shrink: 0; padding: 6px 14px; border-radius: 18px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid #e5e5ea; color: #666; background: #fff; transition: all 0.2s; white-space: nowrap; }
@@ -395,6 +437,47 @@
           <div class="period-btn" data-period="week" onclick="setPeriod(this)">Неделя</div>
           <div class="period-btn active" data-period="month" onclick="setPeriod(this)">Месяц</div>
           <div class="period-btn" data-period="year" onclick="setPeriod(this)">Год</div>
+        </div>
+
+        <!-- Region Filter -->
+        <div class="region-filter">
+          <div class="region-overlay" id="regionOverlay" onclick="toggleRegion()"></div>
+          <div class="region-btn" onclick="toggleRegion()">
+            <span class="region-btn-label">
+              <span class="region-btn-pin">&#128205;</span>
+              <span id="regionLabel">Все регионы</span>
+            </span>
+            <span class="region-btn-icon" id="regionChevron">&#9660;</span>
+          </div>
+          <div class="region-dropdown" id="regionDropdown">
+            <div class="region-option active" onclick="selectRegion(this, 'all')">
+              <span class="region-check">&#10003;</span> Все регионы
+            </div>
+            <div class="region-option" onclick="selectRegion(this, 'msk')">
+              <span class="region-check"></span> Москва
+            </div>
+            <div class="region-option" onclick="selectRegion(this, 'spb')">
+              <span class="region-check"></span> Санкт-Петербург
+            </div>
+            <div class="region-option" onclick="selectRegion(this, 'nn')">
+              <span class="region-check"></span> Нижний Новгород
+            </div>
+            <div class="region-option" onclick="selectRegion(this, 'kzn')">
+              <span class="region-check"></span> Казань
+            </div>
+            <div class="region-option" onclick="selectRegion(this, 'vlv')">
+              <span class="region-check"></span> Владивосток
+            </div>
+            <div class="region-option" onclick="selectRegion(this, 'ekb')">
+              <span class="region-check"></span> Екатеринбург
+            </div>
+            <div class="region-option" onclick="selectRegion(this, 'nsk')">
+              <span class="region-check"></span> Новосибирск
+            </div>
+            <div class="region-option" onclick="selectRegion(this, 'sochi')">
+              <span class="region-check"></span> Сочи
+            </div>
+          </div>
         </div>
 
         <div class="metric-chips">
@@ -600,6 +683,29 @@ function setMetric(el) {
   currentMetric = el.dataset.metric;
   animateTransition();
 }
+function toggleRegion() {
+  const dd = document.getElementById('regionDropdown');
+  const ov = document.getElementById('regionOverlay');
+  const ch = document.getElementById('regionChevron');
+  const isOpen = dd.classList.contains('open');
+  dd.classList.toggle('open');
+  ov.classList.toggle('open');
+  ch.classList.toggle('open');
+}
+
+function selectRegion(el, code) {
+  document.querySelectorAll('.region-option').forEach(o => {
+    o.classList.remove('active');
+    o.querySelector('.region-check').textContent = '';
+  });
+  el.classList.add('active');
+  el.querySelector('.region-check').textContent = '\u2713';
+  const label = el.textContent.trim().replace('\u2713', '').trim();
+  document.getElementById('regionLabel').textContent = label;
+  toggleRegion();
+  animateTransition();
+}
+
 function switchClubTab(el) {
   document.querySelectorAll('.club-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
